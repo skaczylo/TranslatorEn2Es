@@ -32,29 +32,40 @@ class AttentionHead(nn.Module):
         self.key = nn.Linear(in_features=D_EMBEDDING,out_features=dimension, bias=False)
         self.query = nn.Linear(in_features=D_EMBEDDING,out_features=dimension, bias=False)
         self.value = nn.Linear(in_features=D_EMBEDDING,out_features=dimension, bias = False)
+        
 
         #self.dropout = nn.Dropout(DROPOUT)
 
-    def forward(self,x,mask = None):
+    def forward(self,key_input,query_input,value_input, padding_mask = None, masked_attention = False):
+        """
+        padding_mask : Matriz máscara para evitar que los token <PAD> afecten al cálculo de la atencion
+        masked_attention : False indica que no se triangula la matriz de atencion; True se triangula la matriz. 
+        Se usa en el decoder
+        """
 
         #B = numero de Batch; T = numero de "tokens"; C = dimension de cada token
-        B, N, D_i = x.shape
+        B, N, D_i = value_input.shape
+        self.register_buffer('tril', torch.tril(torch.ones(N, N)))
 
-        K = self.key(x) # (B, N , D_i)
-        Q = self.key(x) #(B, N , D_i)
-        V = self.key(x) #(B, N , D_i)
+        K = self.key(key_input) # (B, N , D_i)
+        Q = self.key(query_input) #(B, N , D_i)
+        V = self.key(value_input) #(B, N , D_i)
 
         #Calculamos la Atención QxK^T
-        """
-        Calculamos la "afinidad" Q x K^t
-        Como tenemos batches, usamos el operador @ que aplica la multiplicacion en las dos ultimas dimensiones B veces
-        K.transpose significa transponer la penultima dimensino T con la pultima dimension C. 
-        """
+        #Calculamos la "afinidad" Q x K^t
+        #Como tenemos batches, usamos el operador @ que aplica la multiplicacion en las dos ultimas dimensiones B veces
+        #K.transpose significa transponer la penultima dimensino T con la pultima dimension C. 
+    
         scores = Q @ K.transpose(-2,-1) #(B, N , D_i) x (B,D_i,N) = (B,N,N)
         scores = scores /(D_i ** 0.5)
 
-        if mask is not None:
-            scores = scores + mask  #Sumamos la mascara para evitar que se fije en tokens <PAD>
+        #Mascara para que no pongan atencion en los tokens <PAD>
+        if padding_mask is not None:
+            scores = scores + padding_mask  
+        
+        #Mascara para que los tokens y_n del decoder no se fijen en los posterioes y_n+1,y_n+2,....
+        if masked_attention is True: 
+            scores = scores.masked_fill(self.tril[:N, :N] == 0, float('-inf')) # (B, T, T)
 
         scores = F.softmax(scores, dim=-1) #Aplicamos softmax sobre las filas, es decir, sobre la ultima dimension 
 
@@ -74,14 +85,21 @@ class MultiHeadAttention(nn.Module):
         nn.ModuleList permite tener una lista de modulos y que Pytorch sea "consciente" de que existen; si haces una lista [] normal, no los reconocería a la hora de entrenar
         """
         self.block_attention = nn.ModuleList([AttentionHead(D_EMBEDDING // num_heads) for _ in range(num_heads)])
-        self.projection = nn.Linear(in_features=D_EMBEDDING,out_features=D_EMBEDDING,bias=False)  #Matriz Omega_O 
+        self.projection = nn.Linear(in_features=D_EMBEDDING,
+                                    out_features=D_EMBEDDING,
+                                    bias=False)  #Matriz Omega_O 
 
         self.dropout = nn.Dropout(DROPOUT)
 
-    def forward(self,x,mask = None):
-        B, N, D_i = x.shape
+    def forward(self,key_input,query_input,value_input,padding_mask = None, masked_attention = False):
+       
 
-        outputs = [head(x,mask) for head in self.block_attention] #Lista de matrices Nx(D_Embedding / num_heads)
+        outputs = [head(key_input = key_input ,
+                        query_input = query_input,
+                        value_input = value_input, 
+                        padding_mask = padding_mask, 
+                        masked_attention = masked_attention) 
+                   for head in self.block_attention] #Lista de matrices Nx(D_Embedding / num_heads)
 
         outputs = torch.cat(outputs, dim =-1) # Matriz N x D_embedding (por cada batch) => (B, N, D_embedding)
         multiple_attention = self.projection(outputs)
@@ -104,12 +122,58 @@ class MLP(nn.Module):
         return self.mlp(x)
 
 
+#==================================================
+#DECODER 
+#==================================================
 
-class EncoderBlock(nn.Module):
+class Decoder:
 
+    def __init__(self):
+
+        self.masked_attention_heads = MultiHeadAttention(num_heads= ATTENTION_HEADS)
+        self.attention_heads = MultiHeadAttention(num_heads=ATTENTION_HEADS)
+        self.mlp = MLP()
+        self.LayerNorm1 = nn.LayerNorm(D_EMBEDDING)
+        self.LayerNorm2 = nn.LayerNorm(D_EMBEDDING)
+        self.LayerNorm3 = nn.LayerNorm(D_EMBEDDING)
+
+        
+    def forward(self,x,encoder_ouput,padding_mask =None):
+
+
+        #Primeras capas de atencion 
+        masked_attention = self.attention_heads(key_input = x,
+                                                query_input = x,
+                                                value_input = x,
+                                                padding_mask = padding_mask)
+        
+        z = self.LayerNorm1(masked_attention + z)
+
+
+        #Cross Attention con Encoder
+        cross_attention = self.attention_heads(key_input = encoder_ouput,
+                                               query_input = z,
+                                               value_input = encoder_ouput,
+                                               padding_mask = padding_mask,
+                                               masked_attention=False)
+        
+        y = self.LayerNorm2(cross_attention + z)
+
+        #MLP
+        output = self.LayerNorm3(self.mlp(y) + y)
+
+        return output
+
+
+
+#=============================================
+#ENCODER 
+#=============================================
+
+
+class Encoder(nn.Module):
     """
-    Bloque que se apilará para formar el Encoder
-
+    Arquitectura Encoder
     """
 
     def __init__(self):
@@ -117,53 +181,71 @@ class EncoderBlock(nn.Module):
     
         self.attention_heads = MultiHeadAttention(num_heads= ATTENTION_HEADS)
         self.mlp = MLP()
-        self.LayerNorm = nn.LayerNorm(D_EMBEDDING)
+        self.LayerNorm1 = nn.LayerNorm(D_EMBEDDING)
+        self.LayerNorm2 = nn.LayerNorm(D_EMBEDDING)
 
-    def forward(self,x,mask = None):
+    def forward(self,x,padding_mask = None):
         
         # x = ( B, N, D_i)
 
-        z = self.LayerNorm(self.attention_heads(x,mask) + x)
-        output = self.LayerNorm(self.mlp(z) + z) # ( B, N, D_i)
+        attention = self.attention_heads(key_input = x,
+                                         query_input = x,
+                                         value_input = x,
+                                         padding_mask = padding_mask)
+        
+        z = self.LayerNorm1(attention + x)
+        output = self.LayerNorm2(self.mlp(z) + z) # ( B, N, D_i)
 
         return output
 
 
 
-class Encoder(nn.Module):
+class Transformer(nn.Module):
+    """
+    Arquitectura del Transformer de tipo Encoder-Decoder
+    """
 
     def __init__(self, vocab_size,pad_id):
         super().__init__()
 
-        """
-        Embedding: Tabla E de dimension VOCAB_SIZE x D_EMBEDDING
-        x_n tendrá dimension D_EMBEDDING
-        Pytorch no multiplica matrices aquí, solo indica, dado un vector de indices de tokens, que filas de la matriz E extraer
-        """
-       
-        self.token_embedding_table = nn.Embedding(num_embeddings=vocab_size, embedding_dim=D_EMBEDDING, padding_idx= pad_id)
+   
+        #Input embedding + Positional Encoding
+        self.input_embedding_table = nn.Embedding(num_embeddings=vocab_size, embedding_dim=D_EMBEDDING, padding_idx= pad_id)
+        #El objetivo e determina posición de palabra => numero de embeddings  CONTEXT_LENGT
+        self.input_positional_encoding = nn.Embedding(num_embeddings= CONTEXT_LENGTH, embedding_dim=D_EMBEDDING)  
 
-        """
-        Positional Encoding: x_n = x_n + r_n -> r_ tiene dimensión D_EMBEDDING
-        El objetivo es que permita determinar en que posición se encuentra cada palabra, por eso el numero de embeddings es CONTEXT_LENGT
-        """
-        self.position_embedding_table = nn.Embedding(num_embeddings= CONTEXT_LENGTH, embedding_dim=D_EMBEDDING)
-        self.encoder_blocks = nn.Sequential(*[EncoderBlock() for _ in range(NUMBER_ENCODERS)])
+        #Output embedding + Positional Encoding (entrada del decoder)
+        self.output_embedding_table = nn.Embedding(num_embeddings=vocab_size, embedding_dim=D_EMBEDDING, padding_idx= pad_id)
+        self.output_positional_encoding = nn.Embedding(num_embeddings= CONTEXT_LENGTH, embedding_dim=D_EMBEDDING) 
 
 
-
+        self.encoder_blocks = nn.Sequential(*[Encoder() for _ in range(NUMBER_ENCODERS)])
+        self.decoder_blocks = nn.Sequential(*[Decoder() for _ in range(NUMBER_DECODERS)])
+        self.linear = nn.Linear(in_features=D_EMBEDDING, out_features=vocab_size)
         
-    def forward(self, x, mask = None):
+
+
+    def forward(self, x, y):
 
         B, num_tokens = x.shape
         
         #Input Embedding + Positional Embedding
-        x_embedding = self.token_embedding_table(x) #(B, N, D_i)
-        positional_encoding = self.position_embedding_table(torch.arange(num_tokens))
+        x_embedding = self.input_embedding_table(x) #(B, N, D_i)
+        positional_encoding = self.input_positional_encoding(torch.arange(num_tokens))
         x_embedding = x_embedding + positional_encoding
 
-        #Bloques de Encoder encadenados
-        output = self.encoder_blocks(x_embedding)
+        #Output Embedding + Positional Embedding 
+        y_embedding = self.output_embedding_table(y)
+        positional_encoding = self.input_positional_encoding(torch.arange(num_tokens))
+        y_embedding = y_embedding + positional_encoding
+
+        
+        #Encoder-Decoder
+        encoder_output = self.encoder_blocks(x_embedding)
+        decoder_output = self.decoder_blocks(y_embedding,encoder_output)
+        output = self.linear(decoder_output)
+        
+
         return output
 
 
