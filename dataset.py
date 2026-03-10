@@ -24,7 +24,7 @@ class Tokenizer():
                 "<START>": len(self.gpt2._mergeable_ranks) +1,
                 "<END>": len(self.gpt2._mergeable_ranks) +2,
                 "<PAD>": len(self.gpt2._mergeable_ranks) +3
-            }
+            },
         )
 
 
@@ -41,13 +41,31 @@ class Tokenizer():
     def star_of_text_id(self):
         return self.encoder._special_tokens["<START>"]
     
-    def encode(self,input):
 
-        return self.encoder.encode(input)
+    def add_pad_token(self,tokens):
+        pad = [self.pad_id() for _ in range(CONTEXT_LENGTH-len(tokens))]
+        return np.concatenate((tokens,pad))
+    
+    def encode(self,input: str):
 
+        tokens  =self.encoder.encode("<START>"+input + "<END>",allowed_special="all") 
+
+        if len(tokens) > CONTEXT_LENGTH:
+            tokens =  tokens[:(CONTEXT_LENGTH-1)] + [self.tokenizer.end_of_text_id()]
+
+        tokens = self.add_pad_token(tokens)
+        
+        return tokens
+
+    def empty_predict(self):
+        tokens = self.encoder.encode("<START>",allowed_special="all")
+        tokens = self.add_pad_token(tokens)
+
+        return tokens
     def decoder(self,input):
 
-        return self.encoder.decode(input)
+
+        return self.encoder.decode(input.cpu().numpy())
     
 
 
@@ -63,38 +81,18 @@ class Dataset_(Dataset):
     def __len__(self):
         return len(self.data)
     
-    def adjust_length(self,text):
-        pad = [self.tokenizer.pad_id() for _ in range(CONTEXT_LENGTH-len(text))]
-        return np.concatenate((text,pad))
+    
     
 
     def __getitem__(self, idx):
 
-        en_text = self.tokenizer.encode(self.X.iloc[idx])
-        es_text = self.tokenizer.encode(self.y.iloc[idx])
 
+        en_text = self.X.iloc[idx]
+        es_text = self.y.iloc[idx]
 
-        #Truncar entrada en caso de que se supere dimension entrada x_n
-        if len(en_text) > CONTEXT_LENGTH:
-            en_text =  en_text[:300]
-        
-        if len(es_text) > CONTEXT_LENGTH:
-            es_text = es_text[:(CONTEXT_LENGTH-2)]
-
-
-        en_text = self.adjust_length(en_text)
-        es_text = self.adjust_length(es_text)
-
-       
-        #Añadimos tokens especiales al targe
-        es_text = np.concatenate(([self.tokenizer.star_of_text_id()],
-                                  es_text[:(CONTEXT_LENGTH-2)],
-                                  [self.tokenizer.end_of_text_id()]),
-                                  axis=0)
-
-
+    
         #COnvertimos a tensores
-        es_text =  torch.tensor(es_text,dtype=torch.long)
-        en_text = torch.tensor(en_text,dtype= torch.long)
+        es_tokens =  torch.tensor(self.tokenizer.encode(es_text),dtype=torch.long)
+        en_tokens = torch.tensor(self.tokenizer.encode(en_text),dtype= torch.long)
 
-        return en_text, es_text
+        return en_tokens, es_tokens
