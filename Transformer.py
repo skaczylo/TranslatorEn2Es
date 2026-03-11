@@ -209,7 +209,7 @@ class Transformer(nn.Module):
     def __init__(self, vocab_size,pad_id):
         super().__init__()
 
-
+        self.pad_id = pad_id
         #Input embedding + Positional Encoding
         self.input_embedding_table = nn.Embedding(num_embeddings=vocab_size, embedding_dim=D_EMBEDDING, padding_idx= pad_id)
         #El objetivo e determina posición de palabra => numero de embeddings  CONTEXT_LENGT
@@ -232,7 +232,7 @@ class Transformer(nn.Module):
             encoder_output = encoder(encoder_output, padding_mask = x_padding_mask)
 
         return encoder_output
-    
+
     def decoder(self,y,encoder_output,y_padding_mask):
         decoder_output = y
         for decoder in self.decoder_blocks:
@@ -242,8 +242,8 @@ class Transformer(nn.Module):
 
     def padding_mask(self, input):
       B, num_tokens = input.shape
-      
-      vector_mask = (input == tokenizer.pad_id()).unsqueeze(1)
+
+      vector_mask = (input == self.pad_id).unsqueeze(1)
       padding_mask = torch.ones((B, num_tokens,num_tokens),dtype=bool).to(device)
       padding_mask  = padding_mask * vector_mask
 
@@ -254,18 +254,18 @@ class Transformer(nn.Module):
         B, num_tokens = x.shape #(N, Num_tokens)
 
         #Input Embedding + Positional Embedding
-        x_embedding = self.input_embedding_table(x) 
-        positional_encoding = self.input_positional_encoding(torch.arange(num_tokens).to(device))  
-        x_embedding = x_embedding + positional_encoding  
+        x_embedding = self.input_embedding_table(x)
+        positional_encoding = self.input_positional_encoding(torch.arange(num_tokens).to(device))
+        x_embedding = x_embedding + positional_encoding
 
         #Output Embedding + Positional Embedding
-        y_embedding = self.output_embedding_table(y)  
+        y_embedding = self.output_embedding_table(y)
         positional_encoding = self.input_positional_encoding(torch.arange(num_tokens).to(device))
-        y_embedding = y_embedding + positional_encoding  
+        y_embedding = y_embedding + positional_encoding
 
 
         #Encoder-Decoder
-    
+
         encoder_output = self.encoder(x_embedding, x_padding_mask = self.padding_mask(x))
         decoder_output = self.decoder(y_embedding,encoder_output,self.padding_mask(y))
 
@@ -274,7 +274,7 @@ class Transformer(nn.Module):
 
 
         return output
-    
+
 
     def predict(self,x,y,max_new_tokens = CONTEXT_LENGTH, device = "cpu"):
 
@@ -293,12 +293,12 @@ class Transformer(nn.Module):
                 output = self(x,y).to(device)
 
                 probs = F.softmax(output,dim=-1)
-                
+
                 idx_token = torch.multinomial(probs[:,t,:],num_samples=1)
 
                 y[:,t] = idx_token
 
-              
+
 
         return y  # (B, max_len)
 

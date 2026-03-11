@@ -1,4 +1,3 @@
-
 import tiktoken
 from  Transformer import CONTEXT_LENGTH
 import torch
@@ -8,7 +7,7 @@ from torch.utils.data import Dataset
 class Tokenizer():
     """
     TOKENIZADOR
-    Clase que permitirá dividir o tokenizar un string en tokens. 
+    Clase que permitirá dividir o tokenizar un string en tokens.
     Se usará el algoritmo ya implementado de la liberia tiktoken y el vocabulario de GPT2
     """
 
@@ -30,33 +29,37 @@ class Tokenizer():
 
     def __len__(self):
         return len(self.encoder._mergeable_ranks) + len(self.encoder._special_tokens)
-    
+
 
     def pad_id(self):
         return self.encoder._special_tokens["<PAD>"]
-    
+
     def end_of_text_id(self):
         return self.encoder._special_tokens["<END>"]
-    
+
     def star_of_text_id(self):
         return self.encoder._special_tokens["<START>"]
-    
+
 
     def add_pad_token(self,tokens):
         pad = [self.pad_id() for _ in range(CONTEXT_LENGTH-len(tokens))]
         return np.concatenate((tokens,pad))
-    
-    def encode(self,input: str):
 
-        tokens  =self.encoder.encode("<START>"+input + "<END>",allowed_special="all") 
+    def encode(self,input: str,pad = True):
+
+        tokens  =self.encoder.encode("<START>"+input + "<END>",allowed_special="all")
+
+
 
         if len(tokens) > CONTEXT_LENGTH:
             tokens =  tokens[:(CONTEXT_LENGTH-1)] + [self.tokenizer.end_of_text_id()]
-
-        tokens = self.add_pad_token(tokens)
         
+        if pad:
+            tokens = self.add_pad_token(tokens)
+
         return tokens
 
+   
     def empty_predict(self):
         tokens = self.encoder.encode("<START>",allowed_special="all")
         tokens = self.add_pad_token(tokens)
@@ -66,7 +69,7 @@ class Tokenizer():
 
 
         return self.encoder.decode(input.cpu().numpy())
-    
+
 
 
 # Dataset
@@ -76,13 +79,13 @@ class Dataset_(Dataset):
         self.X = self.data['en']
         self.y = self.data['es']
         self.tokenizer = tokenizer
-        
+
 
     def __len__(self):
         return len(self.data)
-    
-    
-    
+
+
+
 
     def __getitem__(self, idx):
 
@@ -90,7 +93,7 @@ class Dataset_(Dataset):
         en_text = self.X.iloc[idx]
         es_text = self.y.iloc[idx]
 
-    
+
         #COnvertimos a tensores
         es_tokens =  torch.tensor(self.tokenizer.encode(es_text),dtype=torch.long)
         en_tokens = torch.tensor(self.tokenizer.encode(en_text),dtype= torch.long)
