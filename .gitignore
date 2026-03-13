@@ -1,6 +1,10 @@
 .vscode/
-dataset.json
 transformer_training.ipynb
 documentacion/
 resultados/
 __pycache__
+dataset/europarl-v7.es-en.en
+dataset/europarl-v7.es-en.es
+dataset/Parejas de oraciones en InglésEspañol - 2026-03-13.tsv
+dataset/full_dataset.json
+dataset.json
