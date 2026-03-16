@@ -1,4 +1,4 @@
-# 🌐 Transformer: Traductor de Inglés a Español desde Cero
+# Transformer: Traductor de Inglés a Español desde Cero
 
 Este repositorio contiene la implementación completa, desde cero, de un modelo Transformer basado en la arquitectura Encoder-Decoder descrita en el artículo original
 [*Attention Is All You Need*](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). 
@@ -8,8 +8,13 @@ El objetivo principal de este proyecto es entrenar un modelo de Traducción Auto
 
 ## 📖 ¿Qué es este proyecto?
 
-Este proyecto no utiliza librerías de alto nivel sino que el Transformer ha sido programado componente por componente (Self-Attention, Multi-Head Attention, Positional Encoding, etc.) 
-mediante Pytorch para comprender en profundidad el comportamiento y el flujo de de los datos  que hacen posible el correcto funcionamiento del Transformer.
+Este repositorio es la implementación práctica de mi **Trabajo de Fin de Grado (TFG) en Matemáticas**. 
+
+Mientras que en la memoria escrita del TFG analizo y explico en detalle la teoría y todos los conceptos matemáticos que fundamentan esta arquitectura, 
+este proyecto es el fruto de poner en práctica esos conocimientos. 
+
+Por esta razón, no se han utilizado librerías de alto nivel orientadas a NLP (como *Hugging Face*). En su lugar, el modelo ha sido programado desde cero, componente por componente (Self-Attention, Multi-Head Attention, Positional Encoding, etc.) utilizando **PyTorch**. 
+El objetivo de este enfoque es comprender en profundidad las operaciones matriciales, el comportamiento interno y el flujo de los tensores que hacen posible el correcto funcionamiento del Transformer.
 
 ### ¿Qué es un Transformer?
 Antes de 2017, la traducción automática estaba dominada por Redes Neuronales Recurrentes (RNNs) y LSTMs, las cuales procesaban el texto palabra por palabra, siendo lentas y perdiendo el contexto en frases largas. 
@@ -25,8 +30,11 @@ El **Transformer** revolucionó la Inteligencia Artificial al eliminar la recurr
 El proyecto replica la arquitectura clásica Encoder-Decoder. El **Encoder** procesa la frase en inglés y extrae su significado profundo, mientras que el **Decoder** toma esa información y 
 genera la traducción al español, prestando atención a las partes relevantes del texto original paso a paso.
 
-![Arquitectura del Transformer original](ruta/a/tu/imagen/transformer_architecture.png)
-*> Imagen de la arquitectura original extraída del paper "Attention Is All You Need".*
+<p align="center">
+  <img src="media/transformer.png" width="400" alt="Transformer Architecture">
+  <br>
+  <em>Arquitectura del Transformer original (Vaswani et al., 2017)</em>
+</p>
 
 ### Parámetros del Modelo
 Para este entrenamiento, el modelo ha sido instanciado con la siguiente configuración técnica:
@@ -66,26 +74,40 @@ Esto no solo facilita enormemente el aprendizaje del Transformer, sino que aport
 
 ---
 
-## 📊 Comportamiento del Modelo y Resultados
+## 📊 Comportamiento del Modelo
 
-A continuación se muestra cómo se comporta el modelo tras el entrenamiento, ilustrando su capacidad de aprendizaje y traducción.
+A continuación se muestra cómo se comporta el modelo tras el entrenamiento:
+<p align="center">
+  <img src="media/test1.png" width="800" alt="Test1">
+  <br>
+  <em>Test 1</em>
+</p>
+<p align="center">
+  <img src="media/test2.png" width="800" alt="Test1">
+  <br>
+  <em>Test 2</em>
+</p>
+<p align="center">
+  <img src="media/test3.png" width="800" alt="Test1">
+  <br>
+  <em>Test 3</em>
+</p>
+<p align="center">
+  <img src="media/test4.png" width="800" alt="Test1">
+  <br>
+  <em>Test 4</em>
+</p>
 
-### 1. Evolución del Entrenamiento (Loss)
-La siguiente gráfica muestra cómo el modelo fue reduciendo su error (Loss) época tras época, aprendiendo progresivamente el mapeo entre el vocabulario en inglés y su correspondencia en español.
 
-![Gráfica de Loss del entrenamiento](ruta/a/tu/imagen/loss_curve.png)
-*> Curva de aprendizaje mostrando la convergencia del modelo.*
-
-### 2. Mapas de Atención (Cross-Attention)
-La verdadera "magia" del Transformer es visible aquí. Este mapa de calor muestra en qué palabras de la frase original en inglés (columnas) se fijó el Decoder al generar cada palabra en español (filas). Se puede observar cómo el modelo aprende a invertir el orden de los adjetivos y sustantivos (por ejemplo, *blue car* -> *coche azul*).
-
-![Mapa de calor de atención](ruta/a/tu/imagen/attention_map.png)
-*> Visualización de los pesos de atención durante la traducción de una frase.*
-
-### 3. Ejemplos de Inferencia
-Resultados del modelo traduciendo frases que nunca antes había visto en los datasets de entrenamiento:
-
-![Ejemplos de output en consola](ruta/a/tu/imagen/inference_examples.png)
-*> Captura del script de inferencia realizando traducciones en vivo.*
 
 ---
+
+## 📌 Conclusiones y Limitaciones
+
+Aunque el modelo es completamente funcional y logra capturar con éxito la semántica y la estructura gramatical entre el inglés y el español, es importante contextualizar sus resultados. 
+Las traducciones generadas no son perfectas ni alcanzan la fluidez de los sistemas comerciales actuales (como DeepL o Google Translate), lo cual es el comportamiento esperado dadas las restricciones de escala de este proyecto:
+
+* **Tamaño del modelo:** Este Transformer cuenta con aproximadamente **93 millones de parámetros**. Aunque es un tamaño muy respetable para un modelo programado y entrenado desde cero (similar a la versión base del *paper* original), es un modelo "pequeño" si lo comparamos con los paradigmas actuales. Por ponerlo en perspectiva, modelos de lenguaje fundacionales como GPT-3 operan con 175.000 millones de parámetros, y modelos abiertos eficientes como Llama 3 parten de los 8.000 millones.
+* **Volumen de datos:** El conjunto de datos de entrenamiento ronda **1 millón de pares de oraciones**. Si bien es un volumen suficiente para que la red aprenda a alinear los idiomas, entender el vocabulario BPE y traducir estructuras cotidianas, los modelos punteros en traducción automática neuronal se entrenan con corpus masivos que abarcan cientos de millones —e incluso miles de millones— de textos paralelos.
+
+En definitiva, este repositorio cumple satisfactoriamente su propósito principal: demostrar de forma práctica, transparente y matemática la viabilidad de la arquitectura Transformer programada desde las bases, validando así la investigación teórica desarrollada en el TFG.
