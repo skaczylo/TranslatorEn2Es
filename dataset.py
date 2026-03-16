@@ -41,13 +41,13 @@ class Tokenizer():
         return np.concatenate((tokens,pad))
 
     def encode(self, input: str, pad=True):
-        # 1. Codificamos solo el texto limpio (devuelve una lista de IDs)
+       
         raw_tokens = self.encoder.encode(input).ids
 
-        # 2. Le pegamos el START al principio y el END al final matemáticamente
+        
         tokens = [self.star_of_text_id()] + raw_tokens + [self.end_of_text_id()]
 
-        # 3. Truncamos si se pasa del CONTEXT_LENGTH (dejando espacio para el END)
+       
         if len(tokens) > CONTEXT_LENGTH:
             tokens = tokens[:(CONTEXT_LENGTH - 1)] + [self.end_of_text_id()]
         
@@ -75,7 +75,7 @@ class Tokenizer():
         tokens = self.add_pad_token(tokens)
         return tokens
 
-    def decoder(self, input, skip_special_tokens=True):
+    def decode(self, input, skip_special_tokens=True):
         """
         Convierte una lista o tensor de IDs de vuelta a texto.
         skip_special_tokens=True oculta los <PAD>, <START> y <END> al imprimir.

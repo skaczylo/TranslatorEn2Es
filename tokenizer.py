@@ -2,37 +2,32 @@ import json
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
 from tokenizers.trainers import BpeTrainer
-from tokenizers.pre_tokenizers import Whitespace
+from tokenizers.pre_tokenizers import ByteLevel
+from tokenizers.decoders import ByteLevel as ByteLevelDecoder
 
-
-RUTA_DATASET_JSON = "dataset.json" # Cambia esto por la ruta real de tu archivo
-NOMBRE_TOKENIZER_SALIDA = "vocabulario.json"
-
+RUTA_DATASET_JSON = "dataset_800k.json" 
+NOMBRE_TOKENIZER_SALIDA = "vocabulario/vocabulario_32k.json"
 
 def generador_de_textos(ruta_json):
     with open(ruta_json, 'r', encoding='utf-8') as f:
         datos = json.load(f)
         for par in datos:
-            # Mandamos a entrenar tanto la frase en inglés como en español
             yield par['en']
             yield par['es']
 
-#Tokenizador BPE
-# Todo lo que no conozca lo marcará como <UNK> 
 
 tokenizer = Tokenizer(BPE(unk_token="<UNK>"))
 
-tokenizer.pre_tokenizer = Whitespace() # separar por espacios en blanco antes de aplicar el BPE
+#ByteLevel para no perder los espacios
+tokenizer.pre_tokenizer = ByteLevel(add_prefix_space=False)
+tokenizer.decoder = ByteLevelDecoder()
 
 
-# 15,000 tamaño vocab 
 entrenador = BpeTrainer(
-    vocab_size=15000, 
-    special_tokens=["<PAD>", "<START>", "<END>", "<UNK>"]
+    vocab_size=32000, 
+    special_tokens=["<PAD>", "<START>", "<END>", "<UNK>"],
+    initial_alphabet=ByteLevel.alphabet() #
 )
-
-
-print("Entrenando el tokenizador...")
 
 tokenizer.train_from_iterator(generador_de_textos(RUTA_DATASET_JSON), trainer=entrenador)
 tokenizer.save(NOMBRE_TOKENIZER_SALIDA)
