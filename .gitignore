@@ -8,3 +8,9 @@ dataset/europarl-v7.es-en.es
 dataset/Parejas de oraciones en InglésEspañol - 2026-03-13.tsv
 dataset/full_dataset.json
 dataset.json
+.gitignore
+dataset_600k.json
+dataset_800k.json
+tatoeba.tsv
+tatoeba_dataset.json
+media/
