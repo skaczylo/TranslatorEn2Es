@@ -124,7 +124,7 @@ Una vez instalado `uv`, sigue estos pasos para configurar el repositorio:
 4. **Descargar los pesos del modelo:**
    Descarga el archivo desde Google Drive directamente en la carpeta creada:
    ```bash
-   uvx gdown "https://drive.google.com/file/d/1GQSOgfDnf4C7iYhpiBpIbbKaWJo_udV-/view?usp=drive_link" -O model/
+   uvx gdown "https://drive.google.com/file/d/1VSHrUPD1nuS1FAUT0cYzzy-twNzCBVtx/view?usp=drive_link" -O model/
    ```
    
 ### 3. Ejecución del traductor
