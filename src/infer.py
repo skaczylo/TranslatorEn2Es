@@ -4,11 +4,11 @@ import torch
 from pathlib import Path
 
 # Importamos tus módulos
-from config import VOCAB_PATH, BEST_MODEL_PATH
+from config import VOCAB_16K, BEST_MODEL_PATH
 from transformer import TransformerConfig, Transformer
 from data import TranslatorTokenizer
 
-def load_model_and_tokenizer(checkpoint_path: Path, vocab_file: Path, device: str):
+def load_model_and_tokenizer(checkpoint_path=BEST_MODEL_PATH, vocab_file =VOCAB_16K, device = "cpu"):
     """Carga el tokenizador y el modelo con los pesos por defecto."""
 
     if not vocab_file.exists():
@@ -16,6 +16,7 @@ def load_model_and_tokenizer(checkpoint_path: Path, vocab_file: Path, device: st
     if not checkpoint_path.exists():
         raise FileNotFoundError(f"No se encontraron los pesos del modelo en: {checkpoint_path}")
 
+    
     # 1. Cargar Tokenizador
     tokenizer = TranslatorTokenizer(path=str(vocab_file), context_length=128)
 
@@ -81,8 +82,7 @@ def display_banner():
 def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     checkpoint_path = BEST_MODEL_PATH 
-    vocab_file = VOCAB_PATH / "vocab_16k.json"
-
+    
     # Colores para la consola
     AZUL_CLARO = "\033[96m"
     VERDE = "\033[92m"
@@ -90,7 +90,7 @@ def main():
     RESET = "\033[0m"
 
     try:
-        model, tokenizer = load_model_and_tokenizer(checkpoint_path, vocab_file, device)
+        model, tokenizer = load_model_and_tokenizer(checkpoint_path, device)
         display_banner()
 
         while True:

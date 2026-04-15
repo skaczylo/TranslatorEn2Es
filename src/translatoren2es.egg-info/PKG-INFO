@@ -1,0 +1,126 @@
+Metadata-Version: 2.4
+Name: translatoren2es
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.14
+Description-Content-Type: text/markdown
+Requires-Dist: itables>=2.7.3
+Requires-Dist: numpy>=2.4.4
+Requires-Dist: pandas>=3.0.2
+Requires-Dist: tokenizers>=0.22.2
+Requires-Dist: torch>=2.11.0
+Requires-Dist: tqdm>=4.67.3
+
+# Transformer: Traductor de Inglés a Español desde Cero
+
+Este repositorio contiene la implementación completa, desde cero, de un modelo Transformer basado en la arquitectura Encoder-Decoder descrita en el artículo original
+[*Attention Is All You Need*](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). 
+El objetivo principal de este proyecto es entrenar un modelo de Traducción Automática Neuronal (NMT) capaz de traducir texto de inglés a español.
+
+---
+
+## 📖 ¿Qué es este proyecto?
+
+Este repositorio es la implementación práctica de mi **Trabajo de Fin de Grado (TFG) en Matemáticas**. 
+
+Mientras que en la memoria escrita del TFG analizo y explico en detalle la teoría y todos los conceptos matemáticos que fundamentan esta arquitectura, 
+este proyecto es el fruto de poner en práctica esos conocimientos. 
+
+Por esta razón, no se han utilizado librerías de alto nivel orientadas a NLP (como *Hugging Face*). En su lugar, el modelo ha sido programado desde cero, componente por componente (Self-Attention, Multi-Head Attention, Positional Encoding, etc.) utilizando **PyTorch**. 
+El objetivo de este enfoque es comprender en profundidad las operaciones matriciales, el comportamiento interno y el flujo de los tensores que hacen posible el correcto funcionamiento del Transformer.
+
+### ¿Qué es un Transformer?
+Antes de 2017, la traducción automática estaba dominada por Redes Neuronales Recurrentes (RNNs) y LSTMs, las cuales procesaban el texto palabra por palabra, siendo lentas y perdiendo el contexto en frases largas. 
+
+El **Transformer** revolucionó la Inteligencia Artificial al eliminar la recurrencia y utilizar únicamente **Mecanismos de Atención** (*Self-Attention* y *Cross-Attention*). Esto permite al modelo:
+1. Procesar todas las palabras de una frase simultáneamente (paralelización).
+2. Entender qué palabras de una oración están relacionadas entre sí, independientemente de la distancia que las separe.
+
+---
+
+## 🏗️ Arquitectura y Configuración
+
+El proyecto replica la arquitectura clásica Encoder-Decoder. El **Encoder** procesa la frase en inglés y extrae su significado profundo, mientras que el **Decoder** toma esa información y 
+genera la traducción al español, prestando atención a las partes relevantes del texto original paso a paso.
+
+<p align="center">
+  <img src="media/transformer.png" width="400" alt="Transformer Architecture">
+  <br>
+  <em>Arquitectura del Transformer original (Vaswani et al., 2017)</em>
+</p>
+
+### Parámetros del Modelo
+Para este entrenamiento, el modelo ha sido instanciado con la siguiente configuración técnica:
+
+* **`CONTEXT_LENGTH = 64`**: Longitud máxima de las secuencias de entrada y salida (en tokens).
+* **`D_EMBEDDING = 512`**: Dimensión de los vectores de embedding y de las capas ocultas del modelo.
+* **`ATTENTION_HEADS = 8`**: Número de "cabezas" en el mecanismo de Multi-Head Attention, permitiendo al modelo enfocarse en 8 aspectos gramaticales/semánticos diferentes a la vez.
+* **`NUMBER_ENCODERS = 6`**: Cantidad de capas apiladas en el bloque del Encoder.
+* **`NUMBER_DECODERS = 6`**: Cantidad de capas apiladas en el bloque del Decoder.
+
+---
+
+## 📚 Datasets de Entrenamiento
+
+Para lograr que el modelo aprenda a traducir, el entrenamiento se ha realizado utilizando una combinación de dos corpus paralelos:
+
+1. **Tatoeba:** Un gran conjunto de oraciones cotidianas y traducciones colaborativas. Aporta al modelo la capacidad de entender lenguaje natural, coloquial y frases cortas del día a día.
+2. **Parlamento Europeo (Europarl):** Transcripciones oficiales de las sesiones del Parlamento Europeo. Proporciona al modelo una gramática estructurada, vocabulario rico, formal y estructuras de oraciones más complejas.
+
+---
+
+## 🔡 Tokenización y Vocabulario Custom (BPE)
+
+En lugar de depender de tokenizadores preentrenados genéricos (como `cl100k_base` de OpenAI o el de GPT-2), este proyecto implementa **su propio tokenizador entrenado desde cero**
+sobre nuestro corpus bilingüe. Esto mejora significativamente el aprendizaje del algoritmo al estar adaptado específicamente al inglés y al español.
+
+**Características del Tokenizador:**
+* **Algoritmo:** Byte-Pair Encoding (BPE) a nivel de bytes (`ByteLevel`).
+* **Tamaño del vocabulario:** 32.000 tokens (vocabulario compartido para ambos idiomas).
+* **Tokens especiales:** * `<PAD>`: Para rellenar secuencias cortas.
+  * `<START>`: Indica el inicio de la traducción.
+  * `<END>`: Indica el final de la secuencia generada.
+  * `<UNK>`: Para palabras fuera del vocabulario.
+  
+Contar con un vocabulario específico para el par inglés-español, en lugar de depender de tokenizadores universales o a nivel de carácter, optimiza el espacio de embeddings.
+Esto no solo facilita enormemente el aprendizaje del Transformer, sino que aporta una generalización mucho más robusta ante textos no vistos
+
+---
+
+## 📊 Comportamiento del Modelo
+
+A continuación se muestra cómo se comporta el modelo tras el entrenamiento:
+<p align="center">
+  <img src="media/test1.png" width="800" alt="Test1">
+  <br>
+  <em>Test 1</em>
+</p>
+<p align="center">
+  <img src="media/test2.png" width="800" alt="Test1">
+  <br>
+  <em>Test 2</em>
+</p>
+<p align="center">
+  <img src="media/test3.png" width="800" alt="Test1">
+  <br>
+  <em>Test 3</em>
+</p>
+<p align="center">
+  <img src="media/test4.png" width="800" alt="Test1">
+  <br>
+  <em>Test 4</em>
+</p>
+
+
+
+---
+
+## 📌 Conclusiones y Limitaciones
+
+Aunque el modelo es completamente funcional y logra capturar con éxito la semántica y la estructura gramatical entre el inglés y el español, es importante contextualizar sus resultados. 
+Las traducciones generadas no son perfectas ni alcanzan la fluidez de los sistemas comerciales actuales (como DeepL o Google Translate), lo cual es el comportamiento esperado dadas las restricciones de escala de este proyecto:
+
+* **Tamaño del modelo:** Este Transformer cuenta con aproximadamente **93 millones de parámetros**. Aunque es un tamaño muy respetable para un modelo programado y entrenado desde cero (similar a la versión base del *paper* original), es un modelo "pequeño" si lo comparamos con los paradigmas actuales. Por ponerlo en perspectiva, modelos de lenguaje fundacionales como GPT-3 operan con 175.000 millones de parámetros, y modelos abiertos eficientes como Llama 3 parten de los 8.000 millones.
+* **Volumen de datos:** El conjunto de datos de entrenamiento ronda **1 millón de pares de oraciones**. Si bien es un volumen suficiente para que la red aprenda a alinear los idiomas, entender el vocabulario BPE y traducir estructuras cotidianas, los modelos punteros en traducción automática neuronal se entrenan con corpus masivos que abarcan cientos de millones —e incluso miles de millones— de textos paralelos.
+
+En definitiva, este repositorio cumple satisfactoriamente su propósito principal: demostrar de forma práctica, transparente y matemática la viabilidad de la arquitectura Transformer programada desde las bases, validando así la investigación teórica desarrollada en el TFG.

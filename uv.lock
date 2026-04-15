@@ -232,6 +232,15 @@ wheels = [
 ]
 
 [[package]]
+name = "itables"
+version = "2.7.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/85/43/c438b31429d4e8cefc76c7cba80a1c948d2e18d74589fb771ea719474bbf/itables-2.7.3.tar.gz", hash = "sha256:7a9680da20aa6495868265d397f1a8cc03d8fdbc592760d3ddb10b4d6081ff73", size = 2428026, upload-time = "2026-03-22T20:05:14.373Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/79/a5/60a55bd4cb9488d21adcdce88625e1de9bc14ea454677160c162132838cb/itables-2.7.3-py3-none-any.whl", hash = "sha256:b24ebd6a4ab3edab200f41c56e20a12b12b95ec15d3697aeb9bee71d92c008a9", size = 2462653, upload-time = "2026-03-22T20:05:11.819Z" },
+]
+
+[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -701,6 +710,7 @@ name = "translatoren2es"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "itables" },
     { name = "numpy" },
     { name = "pandas" },
     { name = "tokenizers" },
@@ -710,6 +720,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "itables", specifier = ">=2.7.3" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "pandas", specifier = ">=3.0.2" },
     { name = "tokenizers", specifier = ">=0.22.2" },
