@@ -39,20 +39,19 @@ genera la traducción al español, prestando atención a las partes relevantes d
 ### Parámetros del Modelo
 Para este entrenamiento, el modelo ha sido instanciado con la siguiente configuración técnica:
 
-* **`CONTEXT_LENGTH = 64`**: Longitud máxima de las secuencias de entrada y salida (en tokens).
-* **`D_EMBEDDING = 512`**: Dimensión de los vectores de embedding y de las capas ocultas del modelo.
+* **`CONTEXT_LENGTH = 128`**: Longitud máxima de las secuencias de entrada y salida (en tokens).
+* **`D_EMBEDDING = 256`**: Dimensión de los vectores de embedding y de las capas ocultas del modelo.
 * **`ATTENTION_HEADS = 8`**: Número de "cabezas" en el mecanismo de Multi-Head Attention, permitiendo al modelo enfocarse en 8 aspectos gramaticales/semánticos diferentes a la vez.
-* **`NUMBER_ENCODERS = 6`**: Cantidad de capas apiladas en el bloque del Encoder.
-* **`NUMBER_DECODERS = 6`**: Cantidad de capas apiladas en el bloque del Decoder.
+* **`NUMBER_ENCODERS = 4`**: Cantidad de capas apiladas en el bloque del Encoder.
+* **`NUMBER_DECODERS = 4`**: Cantidad de capas apiladas en el bloque del Decoder.
+* * **`DROPOUT = 0.1`**: Tasa de abandono (dropout) utilizada para la regularización durante el entrenamiento..
 
 ---
 
 ## 📚 Datasets de Entrenamiento
+Para el entrenamiento del modelo se ha empleado el dataset OPUS-100 para el par de idiomas inglés-español. 
 
-Para lograr que el modelo aprenda a traducir, el entrenamiento se ha realizado utilizando una combinación de dos corpus paralelos:
-
-1. **Tatoeba:** Un gran conjunto de oraciones cotidianas y traducciones colaborativas. Aporta al modelo la capacidad de entender lenguaje natural, coloquial y frases cortas del día a día.
-2. **Parlamento Europeo (Europarl):** Transcripciones oficiales de las sesiones del Parlamento Europeo. Proporciona al modelo una gramática estructurada, vocabulario rico, formal y estructuras de oraciones más complejas.
+Se ha realizado un filtrado de los datos para mejorar la calidad del corpus, y el análisis detallado de este proceso puede consultarse en el notebook `dataset.ipynb`.
 
 ---
 
@@ -63,7 +62,7 @@ sobre nuestro corpus bilingüe. Esto mejora significativamente el aprendizaje de
 
 **Características del Tokenizador:**
 * **Algoritmo:** Byte-Pair Encoding (BPE) a nivel de bytes (`ByteLevel`).
-* **Tamaño del vocabulario:** 32.000 tokens (vocabulario compartido para ambos idiomas).
+* **Tamaño del vocabulario:** 16.000 tokens (vocabulario compartido para ambos idiomas).
 * **Tokens especiales:** * `<PAD>`: Para rellenar secuencias cortas.
   * `<START>`: Indica el inicio de la traducción.
   * `<END>`: Indica el final de la secuencia generada.
@@ -74,40 +73,62 @@ Esto no solo facilita enormemente el aprendizaje del Transformer, sino que aport
 
 ---
 
-## 📊 Comportamiento del Modelo
+## CLI
 
-A continuación se muestra cómo se comporta el modelo tras el entrenamiento:
-<p align="center">
-  <img src="media/test1.png" width="800" alt="Test1">
-  <br>
-  <em>Test 1</em>
-</p>
-<p align="center">
-  <img src="media/test2.png" width="800" alt="Test1">
-  <br>
-  <em>Test 2</em>
-</p>
-<p align="center">
-  <img src="media/test3.png" width="800" alt="Test1">
-  <br>
-  <em>Test 3</em>
-</p>
-<p align="center">
-  <img src="media/test4.png" width="800" alt="Test1">
-  <br>
-  <em>Test 4</em>
-</p>
+Se ha creado un flujo que permite interactuar con el modelo entrenado directamente a través de la consola.
 
+### 1. Instalación de uv
 
+Para gestionar el entorno y las dependencias de forma eficiente, es necesario instalar **[uv](https://github.com/astral-sh/uv)** . Utiliza el comando correspondiente a tu sistema operativo:
+
+**macOS y Linux:**
+```bash
+# En macOS y Linux.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+# En Windows.
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### 2. Configuración del proyecto
+
+Una vez instalado `uv`, sigue estos pasos para configurar el repositorio:
+
+1. **Clonar el repositorio:**
+   ```bash
+   git clone https://github.com/skaczylo/TranslatorEn2Es.git
+   cd TranslatorEn2Es
+   ```
+
+2. **Sincronizar el entorno:**
+   Este comando instalará automáticamente la versión de Python necesaria y todas las dependencias:
+   ```bash
+   uv sync
+   ```
+3. **Crear carpeta para el modelo. Es importante que la carpeta se llame model**
+   ```bash
+   mkdir model
+   ```
+
+4. **Descargar los pesos del modelo:**
+   Descarga el archivo desde Google Drive directamente en la carpeta creada:
+   ```bash
+   uvx gdown "https://drive.google.com/file/d/1GQSOgfDnf4C7iYhpiBpIbbKaWJo_udV-/view?usp=drive_link" -O model/
+   ```
+   
+### 3. Ejecución del traductor
+
+Para iniciar la interfaz interactiva en la terminal y empezar a traducir, ejecuta:
+
+```bash
+uv run traductor
+```
 
 ---
 
-## 📌 Conclusiones y Limitaciones
 
-Aunque el modelo es completamente funcional y logra capturar con éxito la semántica y la estructura gramatical entre el inglés y el español, es importante contextualizar sus resultados. 
-Las traducciones generadas no son perfectas ni alcanzan la fluidez de los sistemas comerciales actuales (como DeepL o Google Translate), lo cual es el comportamiento esperado dadas las restricciones de escala de este proyecto:
-
-* **Tamaño del modelo:** Este Transformer cuenta con aproximadamente **93 millones de parámetros**. Aunque es un tamaño muy respetable para un modelo programado y entrenado desde cero (similar a la versión base del *paper* original), es un modelo "pequeño" si lo comparamos con los paradigmas actuales. Por ponerlo en perspectiva, modelos de lenguaje fundacionales como GPT-3 operan con 175.000 millones de parámetros, y modelos abiertos eficientes como Llama 3 parten de los 8.000 millones.
-* **Volumen de datos:** El conjunto de datos de entrenamiento ronda **1 millón de pares de oraciones**. Si bien es un volumen suficiente para que la red aprenda a alinear los idiomas, entender el vocabulario BPE y traducir estructuras cotidianas, los modelos punteros en traducción automática neuronal se entrenan con corpus masivos que abarcan cientos de millones —e incluso miles de millones— de textos paralelos.
 
 En definitiva, este repositorio cumple satisfactoriamente su propósito principal: demostrar de forma práctica, transparente y matemática la viabilidad de la arquitectura Transformer programada desde las bases, validando así la investigación teórica desarrollada en el TFG.
