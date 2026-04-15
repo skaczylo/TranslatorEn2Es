@@ -1,4 +1,5 @@
 import os
+import subprocess
 import torch
 from pathlib import Path
 
@@ -35,6 +36,9 @@ def load_model_and_tokenizer(checkpoint_path: Path, vocab_file: Path, device: st
 
 def display_banner():
     """Imprime un banner con las letras TFG en la terminal."""
+    # Limpiamos la consola (compatible con Windows y Linux/Mac)
+    subprocess.run('cls' if os.name == 'nt' else 'clear', shell=True)
+
     # Códigos de color ANSI
     NARANJA = "\033[38;5;208m"
     GRIS = "\033[90m"
@@ -42,14 +46,20 @@ def display_banner():
     RESET = "\033[0m"
     BOLD = "\033[1m"
     
-    # Arte ASCII generado para "TFG"
+    # Arte ASCII generado para "Traductor TFG"
     logo = f"""{NARANJA}{BOLD}
- ████████╗███████╗ ██████╗ 
- ╚══██╔══╝██╔════╝██╔════╝ 
-    ██║   █████╗  ██║  ███╗
-    ██║   ██╔══╝  ██║   ██║
-    ██║   ██║     ╚██████╔╝
-    ╚═╝   ╚═╝      ╚═════╝ 
+ ████████╗██████╗  █████╗ ██████╗ ██╗   ██╗ ██████╗████████╗ ██████╗ ██████╗ 
+ ╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██║   ██║██╔════╝╚══██╔══╝██╔═══██╗██╔══██╗
+    ██║   ██████╔╝███████║██║  ██║██║   ██║██║        ██║   ██║   ██║██████╔╝
+    ██║   ██╔══██╗██╔══██║██║  ██║██║   ██║██║        ██║   ██║   ██║██╔══██╗
+    ██║   ██║  ██║██║  ██║██████╔╝╚██████╔╝╚██████╗   ██║   ╚██████╔╝██║  ██║
+    ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚═════╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝
+                             ████████╗███████╗ ██████╗ 
+                             ╚══██╔══╝██╔════╝██╔════╝ 
+                                ██║   █████╗  ██║  ███╗
+                                ██║   ██╔══╝  ██║   ██║
+                                ██║   ██║     ╚██████╔╝
+                                ╚═╝   ╚═╝      ╚═════╝ 
 {RESET}"""
 
     # Caja de texto superior adaptada al español
