@@ -243,12 +243,13 @@ class Transformer(nn.Module):
         decoder_output = self.decode(y, encoder_output, encoder_mask)
         return self.linear(decoder_output)
 
+    
     @torch.no_grad()
-    def predict(self, x, bos_id, end_id, max_new_tokens=None, device='cpu'):
+    def predict(self, x, start_id, end_id, max_new_tokens=None, top_k=10, device='cpu'):
         self.eval()
         max_new_tokens = max_new_tokens or self.cfg.context_length
         x = x[:, :self.cfg.context_length].to(device)
-        y = torch.tensor([[bos_id]], device=device)
+        y = torch.tensor([[start_id]], device=device)
 
         encoder_output, encoder_mask = self.encode(x)
 
@@ -256,8 +257,14 @@ class Transformer(nn.Module):
             y_cond  = y[:, -self.cfg.context_length:]
             logits  = self.decode(y_cond, encoder_output, encoder_mask)
             logits  = self.linear(logits[:, -1, :])
-            token   = torch.multinomial(F.softmax(logits, dim=-1), num_samples=1)
-            y       = torch.cat([y, token], dim=1)
+
+           
+            v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+            logits[logits < v[:, [-1]]] = -float('Inf')
+            probs = F.softmax(logits, dim=-1)
+            token = torch.multinomial(probs, num_samples=1)
+            
+            y = torch.cat([y, token], dim=1)
             if token.item() == end_id:
                 break
 

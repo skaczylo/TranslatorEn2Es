@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 from transformer import TransformerConfig, Transformer
 from data import TranslatorTokenizer, TranslationDataset
+from config import VOCAB_16K, BEST_MODEL_PATH
 
 
 def get_scheduler(optimizer, d_model, warmup_steps=4000):
@@ -14,6 +15,31 @@ def get_scheduler(optimizer, d_model, warmup_steps=4000):
         return (d_model ** -0.5) * min(step ** -0.5, step * warmup_steps ** -1.5)
     return torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
+def load_tokenizer(vocab_file = VOCAB_16K):
+
+    if not vocab_file.exists():
+        raise FileNotFoundError(f"No se encontró el vocabulario en: {vocab_file}")
+    tokenizer = TranslatorTokenizer(path=str(vocab_file), context_length=128)
+    return tokenizer
+    
+
+def load_model(cfg : TransformerConfig,checkpoint = BEST_MODEL_PATH,device = "cpu"):
+    """
+    Carga el modelo con los pesos de checkpoint y además el tokenizador con el vocabulario del modelo
+    en vocab_file.
+    """
+
+    if not checkpoint.exists():
+        raise FileNotFoundError(f"No se encontraron los pesos del modelo en: {checkpoint}")
+    
+    model = Transformer(cfg)
+
+    checkpoint = torch.load(checkpoint, map_location=device, weights_only=False)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    model.to(device)
+    
+    return model
+    
 
 class Trainer:
     """
@@ -154,7 +180,6 @@ class Trainer:
 
                 save_name = os.path.join(self.results_path, f"best_model_epoch_{epoch+1}_val_{val_loss:.4f}.pth")
                 torch.save(checkpoint, save_name)
-                tqdm.write(f"Nuevo mejor modelo guardado en epoca {epoch+1}")
             else:
                 self.epochs_without_improvement += 1
                 
