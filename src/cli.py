@@ -1,7 +1,8 @@
 import os
 import subprocess
-import torch
 from inference import TranslatorConfig, Translator
+from config import PROJECT_ROOT, URL_BEST_MODEL
+
 
 
 # PALETA DE COLORES
@@ -57,6 +58,23 @@ def display_banner():
     print(f"{GRIS}Escribe en {AMARILLO}inglés{RESET}{GRIS} y pulsa Enter. Para salir: {AMARILLO}'salir'{RESET}{GRIS}, {AMARILLO}'exit'{RESET}{GRIS}.{RESET}\n")
 
 
+def set_up():
+    """
+    Configura el entorno del proyecto.
+
+    Crea una carpeta model/ en la ruta principal si no existe y descarga el modelo si no se encuentra
+    """
+
+    model_folder = os.path.join(PROJECT_ROOT,"model")
+
+    if not os.path.exists(model_folder):
+        os.mkdir(model_folder,exist_ok = True)
+
+
+    if not os.path.exists(os.path.join(model_folder,"best.pth")):
+        comando = ["uvx", "gdown",URL_BEST_MODEL, "-O", model_folder]
+        subprocess.run(comando, check=True, text=True, capture_output=True)
+
 
 def main():
 
@@ -64,6 +82,8 @@ def main():
 
         translator_cfg = TranslatorConfig()
         translator= Translator(cfg=translator_cfg)
+
+        set_up()
         display_banner()
 
         while True:
