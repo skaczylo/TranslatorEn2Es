@@ -68,22 +68,24 @@ def set_up():
     model_folder = os.path.join(PROJECT_ROOT,"model")
 
     if not os.path.exists(model_folder):
-        os.mkdir(model_folder,exist_ok = True)
+        os.makedirs(model_folder,exist_ok = True)
 
 
     if not os.path.exists(os.path.join(model_folder,"best.pth")):
         comando = ["uvx", "gdown",URL_BEST_MODEL, "-O", model_folder]
-        subprocess.run(comando, check=True, text=True, capture_output=True)
+        print("Descargando pesos del modelo entrenado...")
+        subprocess.run(comando, check=True, text=True)
 
 
 def main():
 
     try:
-
+        
+        set_up()
         translator_cfg = TranslatorConfig()
         translator= Translator(cfg=translator_cfg)
 
-        set_up()
+        
         display_banner()
 
         while True:

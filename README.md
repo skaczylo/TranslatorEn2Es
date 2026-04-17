@@ -105,7 +105,7 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 
 Una vez instalado `uv`, sigue estos pasos para configurar el repositorio:
 
-1. **Clonar el repositorio:**
+1. **Clonar el repositorio y cambiar la ruta:**
    ```bash
    git clone https://github.com/skaczylo/TranslatorEn2Es.git
    cd TranslatorEn2Es
@@ -116,20 +116,10 @@ Una vez instalado `uv`, sigue estos pasos para configurar el repositorio:
    ```bash
    uv sync
    ```
-3. **Crear carpeta para el modelo. Es importante que la carpeta se llame model**
-   ```bash
-   mkdir model
-   ```
 
-4. **Descargar los pesos del modelo:**
-   Descarga el archivo desde Google Drive directamente en la carpeta creada:
-   ```bash
-   uvx gdown "https://drive.google.com/file/d/1VSHrUPD1nuS1FAUT0cYzzy-twNzCBVtx/view?usp=drive_link" -O model/
-   ```
-   
 ### 3. Ejecución del traductor
 
-Para iniciar la interfaz interactiva en la terminal y empezar a traducir, ejecuta:
+Para iniciar la interfaz interactiva en la terminal y empezar a traducir, ejecuta. Esto descargará automaticamente los pesos del modelo desde Google Drive.
 
 ```bash
 uv run traductor
