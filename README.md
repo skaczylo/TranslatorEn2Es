@@ -1,125 +1,127 @@
-# Transformer: Traductor de Inglés a Español desde Cero
+# Transformer: English to Spanish Translator from Scratch
+
+[Español](README.es.md) | **English**
 
 [Paper](https://arxiv.org/abs/1706.03762) | [PyTorch](https://pytorch.org/) | [License: MIT](https://opensource.org/licenses/MIT)
 
-Este repositorio contiene la implementación completa, desde cero, de un modelo Transformer basado en la arquitectura Encoder-Decoder descrita en el artículo original "Attention Is All You Need" (Vaswani et al., 2017). 
+This repository contains the complete implementation, from scratch, of a Transformer model based on the Encoder-Decoder architecture described in the original paper "Attention Is All You Need" (Vaswani et al., 2017).
 
-El objetivo principal de este proyecto es entrenar un modelo de Traducción Automática Neuronal (NMT) capaz de traducir texto de inglés a español.
-
----
-
-## Índice
-1. [Qué es este proyecto](#qué-es-este-proyecto)
-2. [Arquitectura y Configuración](#arquitectura-y-configuración)
-3. [Datasets de Entrenamiento](#datasets-de-entrenamiento)
-4. [Tokenización y Vocabulario Custom (BPE)](#tokenización-y-vocabulario-custom-bpe)
-5. [CLI: Instalación y Uso](#cli)
+The main goal of this project is to train a Neural Machine Translation (NMT) model capable of translating text from English to Spanish.
 
 ---
 
-## Qué es este proyecto
-
-Este repositorio es la implementación práctica de mi **Trabajo de Fin de Grado (TFG) en Matemáticas**. 
-
-> **Nota:** Mientras que en la memoria escrita del TFG analizo y explico en detalle la teoría y todos los conceptos matemáticos que fundamentan esta arquitectura, este proyecto es el fruto de poner en práctica esos conocimientos.
-
-Por esta razón, **no se han utilizado librerías de alto nivel** orientadas a NLP (como *Hugging Face*). En su lugar, el modelo ha sido programado desde cero, componente por componente (Self-Attention, Multi-Head Attention, Positional Encoding, etc.) utilizando **PyTorch**. El objetivo de este enfoque es comprender en profundidad las operaciones matriciales, el comportamiento interno y el flujo de los tensores que hacen posible el correcto funcionamiento del Transformer.
-
-### ¿Qué es un Transformer?
-Antes de 2017, la traducción automática estaba dominada por Redes Neuronales Recurrentes (RNNs) y LSTMs, las cuales procesaban el texto palabra por palabra, siendo lentas y perdiendo el contexto en frases largas. 
-
-El **Transformer** revolucionó la Inteligencia Artificial al eliminar la recurrencia y utilizar únicamente **Mecanismos de Atención** (*Self-Attention* y *Cross-Attention*). Esto permite al modelo:
-1. **Paralelización:** Procesar todas las palabras de una frase simultáneamente.
-2. **Contexto Global:** Entender qué palabras de una oración están relacionadas entre sí, independientemente de la distancia que las separe.
+## Index
+1. [About this project](#about-this-project)
+2. [Architecture and Configuration](#architecture-and-configuration)
+3. [Training Datasets](#training-datasets)
+4. [Tokenization and Custom Vocabulary (BPE)](#tokenization-and-custom-vocabulary-bpe)
+5. [CLI: Installation and Usage](#cli)
 
 ---
 
-## Arquitectura y Configuración
+## About this project
 
-El proyecto replica la arquitectura clásica **Encoder-Decoder**. El Encoder procesa la frase en inglés y extrae su significado profundo, mientras que el Decoder toma esa información y genera la traducción al español, prestando atención a las partes relevantes del texto original paso a paso.
+This repository is the practical implementation of my **Mathematics Final Degree Project (TFG)**.
+
+> **Note:** While the written report of the TFG analyzes and explains in detail the theory and all the mathematical concepts underlying this architecture, this project is the result of putting that knowledge into practice.
+
+For this reason, **no high-level NLP libraries** (such as *Hugging Face*) have been used. Instead, the model has been programmed from scratch, component by component (Self-Attention, Multi-Head Attention, Positional Encoding, etc.) using **PyTorch**. The objective of this approach is to deeply understand the matrix operations, internal behavior, and the flow of tensors that make the Transformer work correctly.
+
+### What is a Transformer?
+Before 2017, machine translation was dominated by Recurrent Neural Networks (RNNs) and LSTMs, which processed text word by word, being slow and losing context in long sentences.
+
+The **Transformer** revolutionized Artificial Intelligence by eliminating recurrence and using only **Attention Mechanisms** (*Self-Attention* and *Cross-Attention*). This allows the model to achieve:
+1. **Parallelization:** Process all words in a sentence simultaneously.
+2. **Global Context:** Understand how words in a sentence are related to each other, regardless of the distance between them.
+
+---
+
+## Architecture and Configuration
+
+The project replicates the classic **Encoder-Decoder** architecture. The Encoder processes the English sentence and extracts its deep meaning, while the Decoder takes that information and generates the Spanish translation, paying attention to relevant parts of the original text step by step.
 
 <p align="center">
   <img src="media/transformer.png" width="400" alt="Transformer Architecture">
   <br>
-  <em>Arquitectura del Transformer original (Vaswani et al., 2017)</em>
+  <em>Original Transformer Architecture (Vaswani et al., 2017)</em>
 </p>
 
-### Parámetros del Modelo
-Para este entrenamiento, el modelo ha sido instanciado con la siguiente configuración técnica:
+### Model Parameters
+For this training, the model has been instantiated with the following technical configuration:
 
-| Parámetro | Valor | Descripción |
+| Parameter | Value | Description |
 | :--- | :--- | :--- |
-| `CONTEXT_LENGTH` | **128** | Longitud máxima de las secuencias de entrada y salida (en tokens). |
-| `D_EMBEDDING` | **256** | Dimensión de los vectores de embedding y de las capas ocultas. |
-| `ATTENTION_HEADS`| **8** | Número de "cabezas" en el mecanismo de Multi-Head Attention. |
-| `NUMBER_ENCODERS`| **4** | Cantidad de capas apiladas en el bloque del Encoder. |
-| `NUMBER_DECODERS`| **4** | Cantidad de capas apiladas en el bloque del Decoder. |
-| `DROPOUT` | **0.1** | Tasa de abandono utilizada para la regularización. |
+| `CONTEXT_LENGTH` | **128** | Maximum length of input and output sequences (in tokens). |
+| `D_EMBEDDING` | **256** | Dimension of embedding vectors and hidden layers. |
+| `ATTENTION_HEADS`| **8** | Number of "heads" in the Multi-Head Attention mechanism. |
+| `NUMBER_ENCODERS`| **4** | Number of stacked layers in the Encoder block. |
+| `NUMBER_DECODERS`| **4** | Number of stacked layers in the Decoder block. |
+| `DROPOUT` | **0.1** | Dropout rate used for regularization. |
 
 ---
 
-## Datasets de Entrenamiento
-Para el entrenamiento del modelo se ha empleado el dataset **OPUS-100** para el par de idiomas inglés-español. 
+## Training Datasets
+The **OPUS-100** dataset was used for training the model for the English-Spanish language pair.
 
-Se ha realizado un filtrado de los datos para mejorar la calidad del corpus, y el análisis detallado de este proceso puede consultarse en el notebook `dataset.ipynb`.
+Data filtering was performed to improve the quality of the corpus, and a detailed analysis of this process can be found in the `dataset.ipynb` notebook.
 
 ---
 
-## Tokenización y Vocabulario Custom (BPE)
+## Tokenization and Custom Vocabulary (BPE)
 
-En lugar de depender de tokenizadores preentrenados genéricos (como `cl100k_base` de OpenAI o el de GPT-2), este proyecto implementa **su propio tokenizador entrenado desde cero** sobre nuestro corpus bilingüe. Esto mejora significativamente el aprendizaje del algoritmo al estar adaptado específicamente al inglés y al español.
+Instead of relying on generic pre-trained tokenizers (such as OpenAI's `cl100k_base` or GPT-2's), this project implements **its own tokenizer trained from scratch** on our bilingual corpus. This significantly improves the algorithm's learning as it is specifically adapted to English and Spanish.
 
-**Características del Tokenizador:**
-* **Algoritmo:** Byte-Pair Encoding (BPE) a nivel de bytes (`ByteLevel`).
-* **Tamaño del vocabulario:** 16.000 tokens (vocabulario compartido para ambos idiomas).
-* **Tokens especiales:** * `<PAD>`: Para rellenar secuencias cortas.
-    * `<START>`: Indica el inicio de la traducción.
-    * `<END>`: Indica el final de la secuencia generada.
-    * `<UNK>`: Para palabras fuera del vocabulario.
+**Tokenizer Features:**
+* **Algorithm:** Byte-Pair Encoding (BPE) at the byte level (`ByteLevel`).
+* **Vocabulary Size:** 16,000 tokens (shared vocabulary for both languages).
+* **Special Tokens:** * `<PAD>`: To pad short sequences.
+    * `<START>`: Indicates the start of the translation.
+    * `<END>`: Indicates the end of the generated sequence.
+    * `<UNK>`: For out-of-vocabulary words.
 
-Contar con un vocabulario específico para el par inglés-español optimiza el espacio de embeddings. Esto no solo facilita el aprendizaje del Transformer, sino que aporta una generalización mucho más robusta ante textos no vistos.
+Having a specific vocabulary for the English-Spanish pair optimizes the embedding space. This not only facilitates Transformer learning but also provides a much more robust generalization for unseen texts.
 
 ---
 
 ## CLI
 
-Se ha creado un flujo que permite interactuar con el modelo entrenado directamente a través de la consola.
+A flow has been created to interact with the trained model directly through the console.
 
-### 1. Instalación de uv
+### 1. Installation of uv
 
-Para gestionar el entorno y las dependencias de forma eficiente, es necesario instalar **[uv](https://github.com/astral-sh/uv)** . Utiliza el comando correspondiente a tu sistema operativo:
+To manage the environment and dependencies efficiently, it is necessary to install **[uv](https://github.com/astral-sh/uv)**. Use the command corresponding to your operating system:
 
-**macOS y Linux:**
+**macOS and Linux:**
 ```bash
-# En macOS y Linux.
+# On macOS and Linux.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 **Windows:**
 ```powershell
-# En Windows.
+#Windows.
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### 2. Configuración del proyecto
+### 2. Project Configuration
 
-Una vez instalado `uv`, sigue estos pasos para configurar el repositorio:
+Once `uv` is installed, follow these steps to configure the repository:
 
-1. **Clonar el repositorio y cambiar la ruta:**
+1. **Clone the repository and change the path:**
    ```bash
    git clone https://github.com/skaczylo/Transformer-Translator.git
    cd TranslatorEn2Es
    ```
 
-2. **Sincronizar el entorno:**
-   Este comando instalará automáticamente la versión de Python necesaria y todas las dependencias:
+2. **Synchronize the environment:**
+   This command will automatically install the necessary Python version and all dependencies:
    ```bash
    uv sync
    ```
 
-### 3. Ejecución del traductor
+### 3. Run the translator
 
-Para iniciar la interfaz interactiva en la terminal y empezar a traducir, ejecuta. Esto descargará automaticamente los pesos del modelo desde Google Drive.
+To start the interactive interface in the terminal and begin translating, run the command. This will automatically download the model weights from Google Drive.
 
 ```bash
 uv run traductor
@@ -129,6 +131,3 @@ uv run traductor
   <br>
   <em>CLI</em>
 </p>
-
-
-

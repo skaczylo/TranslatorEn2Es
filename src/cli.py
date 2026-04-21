@@ -4,7 +4,6 @@ from inference import TranslatorConfig, Translator
 from config import PROJECT_ROOT, URL_BEST_MODEL
 
 
-
 # PALETA DE COLORES
 CIAN_CLARO = "\033[96m"
 AMARILLO_VIVO = "\033[1;93m" 
