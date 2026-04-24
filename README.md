@@ -110,7 +110,7 @@ Once `uv` is installed, follow these steps to configure the repository:
 1. **Clone the repository and change the path:**
    ```bash
    git clone https://github.com/skaczylo/Transformer-Translator.git
-   cd TranslatorEn2Es
+   cd Transformer-Translator
    ```
 
 2. **Synchronize the environment:**
